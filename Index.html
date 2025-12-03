@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Detektiv-Lerntool – Wo ist der Wasserautomat?</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #050612;
+      --panel: #111320;
+      --accent: #6c5ce7;
+      --accent-soft: rgba(108, 92, 231, 0.18);
+      --good: #00b894;
+      --bad: #d63031;
+      --text: #f5f6ff;
+      --text-soft: #b2b3d0;
+      --border-soft: rgba(255,255,255,0.12);
+      --radius-xl: 18px;
+      --shadow-soft: 0 18px 50px rgba(0,0,0,0.55);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #343a5e 0, #060712 42%, #01010a 100%);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 24px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1200px;
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 960px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--panel);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid var(--border-soft);
+      padding: 18px 20px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    h1, h2, h3 {
+      margin: 0 0 10px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      letter-spacing: 0.03em;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--accent-soft);
+      background: rgba(10, 10, 30, 0.9);
+      font-size: 0.75rem;
+      color: var(--text-soft);
+      margin-bottom: 6px;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--text-soft);
+      margin-bottom: 4px;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .meta-block {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
+
+    .meta-block strong {
+      color: var(--text);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--accent-soft);
+      font-size: 0.78rem;
+      color: var(--text-soft);
+    }
+
+    .timer {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .question-area {
+      margin-top: 4px;
+    }
+
+    .question-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      margin-bottom: 8px;
+      color: var(--text-soft);
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .question-text {
+      margin: 4px 0 12px;
+      font-size: 1rem;
+    }
+
+    .answers {
+      display: grid;
+      gap: 8px;
+    }
+
+    .answer-btn {
+      width: 100%;
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border-soft);
+      background: rgba(9, 10, 25, 0.85);
+      color: var(--text);
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      transition: transform 0.06s ease, box-shadow 0.06s ease, border-color 0.06s ease, background 0.06s ease;
+    }
+
+    .answer-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.4);
+      border-color: rgba(255,255,255,0.16);
+    }
+
+    .answer-label {
+      font-weight: 600;
+      opacity: 0.7;
+      min-width: 18px;
+    }
+
+    .answer-btn.correct {
+      border-color: var(--good);
+      background: rgba(0, 184, 148, 0.16);
+    }
+
+    .answer-btn.wrong {
+      border-color: var(--bad);
+      background: rgba(214, 48, 49, 0.16);
+    }
+
+    .answer-btn.disabled {
+      pointer-events: none;
+      opacity: 0.8;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .status-line {
+      margin-top: 10px;
+      font-size: 0.86rem;
+      color: var(--text-soft);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border-soft);
+      color: var(--text-soft);
+      font-weight: 500;
+    }
+
+    .story-box {
+      margin-top: 14px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 14px;
+      border: 1px solid var(--border-soft);
+      font-size: 0.9rem;
+      color: var(--text-soft);
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .story-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #8f90ff;
+      margin-bottom: 4px;
+    }
+
+    .result-box {
+      margin-top: 14px;
+      padding: 10px 12px;
+      background: rgba(0, 184, 148, 0.08);
+      border-radius: 14px;
+      border: 1px solid rgba(0, 184, 148, 0.4);
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .result-box strong {
+      color: #00e0b0;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Ort-Auswahl */
+
+    .killer-section {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .killer-grid {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+    }
+
+    .killer-btn {
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border-soft);
+      background: rgba(9,10,25,0.9);
+      color: var(--text-soft);
+      font-size: 0.85rem;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .killer-btn.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--text);
+    }
+
+    .killer-btn.correct {
+      border-color: var(--good);
+      background: rgba(0, 184, 148, 0.2);
+      color: var(--text);
+    }
+
+    .killer-btn.wrong {
+      border-color: var(--bad);
+      background: rgba(214, 48, 49, 0.2);
+      color: var(--text);
+    }
+
+    .killer-btn.disabled {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .killer-hint {
+      font-size: 0.85rem;
+      color: var(--text-soft);
+      margin-top: 6px;
+    }
+
+    .name-input-row {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input[type="text"] {
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: #0a0b18;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      min-width: 0;
+      flex: 1;
+    }
+
+    input[type="text"]::placeholder {
+      color: #6f7193;
+    }
+
+    /* Highscore-Panel */
+
+    .highscore-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+
+    .highscore-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .highscore-table th,
+    .highscore-table td {
+      padding: 6px 8px;
+      text-align: left;
+    }
+
+    .highscore-table th {
+      font-weight: 600;
+      color: var(--text-soft);
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .highscore-table tr:nth-child(even) {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .highscore-table td {
+      color: var(--text);
+    }
+
+    .highscore-rank {
+      font-variant-numeric: tabular-nums;
+      opacity: 0.8;
+    }
+
+    .empty-state {
+      font-size: 0.85rem;
+      color: var(--text-soft);
+      margin-top: 6px;
+    }
+
+    .hints-list {
+      margin-top: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+      font-size: 0.86rem;
+      color: var(--text-soft);
+      border-top: 1px solid var(--border-soft);
+      padding-top: 8px;
+    }
+
+    .hint-item {
+      margin-bottom: 6px;
+    }
+
+    .hint-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #8f90ff;
+      display: inline-block;
+      margin-bottom: 1px;
+    }
+
+    .tagline {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      margin-bottom: 6px;
+    }
+
+    /* STORY OVERLAY (Schild) */
+
+    .story-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .story-overlay.hidden {
+      display: none;
+    }
+
+    .story-overlay-inner {
+      background: #15172b;
+      border-radius: 20px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.8);
+      border: 1px solid var(--accent-soft);
+      max-width: 640px;
+      width: 90%;
+      padding: 20px 22px 18px;
+      text-align: left;
+    }
+
+    .story-overlay-title {
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #b3b4ff;
+      margin-bottom: 6px;
+    }
+
+    .story-overlay-heading {
+      font-size: 1.25rem;
+      margin: 0 0 10px;
+    }
+
+    .story-overlay-text {
+      font-size: 0.95rem;
+      color: var(--text-soft);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .story-overlay-footer {
+      display: flex;
+      justify-content: flex-end;
+    }
+  </style>
+</head>
+<body>
+  <!-- STORY OVERLAY (Schild) -->
+  <div id="storyOverlay" class="story-overlay hidden">
+    <div class="story-overlay-inner" id="storyOverlayInner">
+      <div class="story-overlay-title">Dr. Simon ermittelt</div>
+      <h2 class="story-overlay-heading" id="storyOverlayHeading">Der Fall des verschwundenen Wasserautomaten</h2>
+      <div class="story-overlay-text" id="storyOverlayText">
+        <!-- Story-Text per JS -->
+      </div>
+      <div class="story-overlay-footer">
+        <button class="btn" id="storyOverlayClose" type="button">Weiter</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app">
+    <!-- Quiz / Story Card -->
+    <div class="card">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        Detektiv-Lerntool • Dr. Simon & der Wasserautomat
+      </div>
+      <h1>Wo ist der Wasserautomat?</h1>
+      <p class="tagline">
+        Beantworte die Fragen, sammle Hinweise und finde den Ort, an dem der Wasserautomat versteckt wurde.
+      </p>
+
+      <div class="top-row">
+        <div class="meta-block">
+          <div class="label">Fortschritt</div>
+          <div>
+            <span id="questionCounter">Frage 1 / 20</span>
+          </div>
+        </div>
+        <div class="meta-block">
+          <div class="label">Timer</div>
+          <div class="timer" id="timerDisplay">00:00</div>
+        </div>
+        <div class="meta-block">
+          <div class="label">Status</div>
+          <div>
+            Richtige: <strong id="correctCountDisplay">0</strong>
+          </div>
+        </div>
+      </div>
+
+      <div id="quizSection" class="question-area">
+        <div class="question-meta">
+          <span class="pill" id="questionCategory">Allgemein</span>
+          <span id="questionInfo"></span>
+        </div>
+        <div class="question-text" id="questionText"></div>
+        <div class="answers" id="answersContainer"></div>
+
+        <div class="status-line">
+          <span id="feedbackText">Wähle eine Antwort aus.</span>
+          <button class="btn-secondary" id="restartButton" type="button">Neu starten</button>
+        </div>
+      </div>
+
+      <div id="resultBox" class="result-box">
+        <div id="resultSummary"></div>
+      </div>
+
+      <div id="killerSection" class="killer-section hidden">
+        <h3>Große Frage: Wo steht der Wasserautomat jetzt?</h3>
+        <p class="killer-hint">
+          Dank deiner Antworten sind einige Orte ausgeschlossen worden. Wähle den Ort, an dem der Wasserautomat versteckt wurde.
+        </p>
+        <div class="killer-grid" id="killerGrid"></div>
+        <div class="killer-hint" id="killerFeedback"></div>
+
+        <div class="name-input-row">
+          <input type="text" id="playerNameInput" placeholder="Dein Name für die Highscore-Liste" />
+          <button class="btn" id="saveScoreButton" type="button" disabled>
+            In Highscore speichern
+          </button>
+        </div>
+      </div>
+
+      <div class="story-box">
+        <div class="story-title">Kurzinfo</div>
+        <div id="currentStoryContent">
+          Dr. Simon hat bemerkt, dass der Wasserautomat in der Schule verschwunden ist – und irgendjemand hat ihn umgestellt…
+        </div>
+      </div>
+    </div>
+
+    <!-- Highscore / Hinweise Card -->
+    <div class="card">
+      <div class="highscore-header">
+        <h2>Highscore</h2>
+      </div>
+      <table class="highscore-table" id="highscoreTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Richtige</th>
+            <th>Zeit</th>
+            <th>Ort gefunden?</th>
+          </tr>
+        </thead>
+        <tbody id="highscoreBody"></tbody>
+      </table>
+      <div id="highscoreEmpty" class="empty-state">
+        Noch keine Einträge. Spiele eine Runde und trage dich ein!
+      </div>
+
+      <div class="hints-list" id="hintsList">
+        <div class="hint-item">
+          <div class="hint-label">Hinweis 0</div>
+          <div>Die Ermittlungen haben gerade erst begonnen…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================
+    // KONFIGURATION – 20 fachliche Fragen
+    // ==========================
+
+    const questions = [
+      {
+        text: "Welche Aussage beschreibt im Sinne des „Kreislaufs der Nachrichten“ am präzisesten die Rolle des Empfängers?",
+        category: "Kommunikation",
+        answers: [
+          { text: "Der Empfänger rekonstruiert die Aussage ausschließlich auf Basis der Sachebene.", correct: false },
+          { text: "Der Empfänger ordnet die Botschaft automatisch einer der vier Seiten der Nachricht zu.", correct: false },
+          { text: "Der Empfänger übersetzt die gesendete Nachricht unter Einbezug eigener Erfahrungen und Interpretationen.", correct: true },
+          { text: "Der Empfänger übernimmt die Intention des Senders vollständig.", correct: false },
+          { text: "Der Empfänger entschlüsselt primär nonverbale Signale.", correct: false },
+          { text: "Der Empfänger bestimmt die Gesprächsrichtung ohne Einfluss des Senders.", correct: false }
+        ]
+      },
+      {
+        text: "Welches Element gehört im Sinne des Skripts NICHT zur Methode des Aktiven Zuhörens?",
+        category: "Kommunikation",
+        answers: [
+          { text: "Paraphrasieren", correct: false },
+          { text: "Verbalisieren emotionaler Inhalte", correct: false },
+          { text: "Nachfragen zur Klärung", correct: false },
+          { text: "Bewerten und Ergänzen der Aussage des Gegenübers", correct: true },
+          { text: "Zusammenfassen", correct: false },
+          { text: "Spiegeln von Gefühlen", correct: false }
+        ]
+      },
+      {
+        text: "Welche Aussage zum Vier-Seiten-Modell nach Schulz von Thun ist korrekt?",
+        category: "Kommunikation",
+        answers: [
+          { text: "Die Beziehungsebene enthält ausschließlich nonverbale Elemente.", correct: false },
+          { text: "Die Selbstoffenbarungsebene beschreibt ausschließlich spontane Gefühlsäußerungen.", correct: false },
+          { text: "Die Appellseite enthält implizite oder explizite Handlungsaufforderungen.", correct: true },
+          { text: "Die Sachebene wird nur vom Sender, nicht vom Empfänger interpretiert.", correct: false },
+          { text: "Jede Nachricht enthält höchstens zwei Seiten, jedoch nicht zwingend vier.", correct: false },
+          { text: "Beziehungshinweise entstehen nur durch Tonfall und Gestik.", correct: false }
+        ]
+      },
+      {
+        text: "Welche Aussage charakterisiert den Begriff „Disposition“ im Rahmen der Persönlichkeitspsychologie korrekt?",
+        category: "Persönlichkeitspsychologie",
+        answers: [
+          { text: "Eine Disposition beschreibt ausschließlich kurzfristige Stimmungsschwankungen.", correct: false },
+          { text: "Eine Disposition ist identisch mit dem Begriff „Temperament“.", correct: false },
+          { text: "Eine Disposition ist eine überdauernde, situationsübergreifende Verhaltensbereitschaft.", correct: true },
+          { text: "Dispositionen sind ausschließlich angeboren.", correct: false },
+          { text: "Dispositionen verändern sich im Lebensverlauf nicht.", correct: false },
+          { text: "Dispositionen werden situativ aktiviert, haben aber keine Stabilität.", correct: false }
+        ]
+      },
+      {
+        text: "Welche Definition trifft auf den Temperamentsbegriff im Sinne der Vorlesung am genauesten zu?",
+        category: "Persönlichkeitspsychologie",
+        answers: [
+          { text: "Temperament beschreibt kurzfristige emotionale Zustände.", correct: false },
+          { text: "Temperament bezeichnet vor allem soziale Kompetenzen.", correct: false },
+          { text: "Temperament umfasst angeborene, früh beobachtbare Unterschiede im affektiven Verhalten.", correct: true },
+          { text: "Temperament ist vollständig erlernt.", correct: false },
+          { text: "Temperament bezieht sich ausschließlich auf kognitive Fähigkeiten.", correct: false },
+          { text: "Temperament variiert täglich stark.", correct: false }
+        ]
+      },
+      {
+        text: "Welcher Big-Five-Faktor umfasst Merkmale wie Pflichtbewusstsein, Zuverlässigkeit und Selbstdisziplin?",
+        category: "Big Five",
+        answers: [
+          { text: "Offenheit", correct: false },
+          { text: "Extraversion", correct: false },
+          { text: "Neurotizismus", correct: false },
+          { text: "Verträglichkeit", correct: false },
+          { text: "Gewissenhaftigkeit", correct: true },
+          { text: "Emotionale Stabilität", correct: false }
+        ]
+      },
+      {
+        text: "Welcher Aspekt gehört im Rahmenmodell von McAdams und Pals NICHT zu den dort beschriebenen Ebenen der Persönlichkeit?",
+        category: "Persönlichkeitspsychologie",
+        answers: [
+          { text: "Dispositionelle Merkmale", correct: false },
+          { text: "Charakteristische Adaptionen", correct: false },
+          { text: "Narrative Identität", correct: false },
+          { text: "Biologische Grundfunktionen", correct: true },
+          { text: "Kulturelle Einbettung", correct: false },
+          { text: "Evolutionspsychologische Grundlagen", correct: false }
+        ]
+      },
+      {
+        text: "Welche Aussage zur sozialen Konformität ist im Sinne der Sozialpsychologie korrekt?",
+        category: "Sozialpsychologie",
+        answers: [
+          { text: "Konformität bezeichnet das absichtliche Unterlaufen von Gruppenregeln.", correct: false },
+          { text: "Konformität entsteht nur unter explizitem Gruppenzwang.", correct: false },
+          { text: "Konformität bedeutet Anpassung des Verhaltens an wahrgenommene Gruppennormen.", correct: true },
+          { text: "Konformität tritt ausschließlich in großen Gruppen auf.", correct: false },
+          { text: "Konformität ist grundsätzlich negativ zu bewerten.", correct: false },
+          { text: "Konformität ist identisch mit Gehorsam gegenüber Autoritäten.", correct: false }
+        ]
+      },
+      {
+        text: "Welcher Faktor fördert laut Skript den Einfluss von Minderheiten auf Mehrheiten besonders?",
+        category: "Sozialpsychologie",
+        answers: [
+          { text: "Inkonsequentes Verhalten der Minderheit", correct: false },
+          { text: "Häufiger Meinungswechsel innerhalb der Minderheit", correct: false },
+          { text: "Hohe Konsistenz in der vertretenen Position der Minderheit über die Zeit.", correct: true },
+          { text: "Starkes Machtgefälle zugunsten der Mehrheit", correct: false },
+          { text: "Fehlende argumentative Begründung der Minderheitsposition", correct: false },
+          { text: "Geringe Sichtbarkeit der Minderheit in der Gruppe", correct: false }
+        ]
+      },
+      {
+        text: "Welche Aussage beschreibt eine „intuitive Persönlichkeitstheorie“ im Sinne der Vorlesung korrekt?",
+        category: "Persönlichkeitspsychologie",
+        answers: [
+          { text: "Intuitive Theorien basieren primär auf empirisch überprüften Daten.", correct: false },
+          { text: "Intuitive Theorien sind systematisch validierte Persönlichkeitsmodelle.", correct: false },
+          { text: "Intuitive Theorien helfen Menschen, mit geringer Informationslage schnell Urteile zu bilden.", correct: true },
+          { text: "Intuitive Theorien sind frei von Wahrnehmungsverzerrungen.", correct: false },
+          { text: "Intuitive Theorien werden ausschließlich in der Psychotherapie eingesetzt.", correct: false },
+          { text: "Intuitive Theorien ersetzen wissenschaftlich fundierte Diagnostik vollständig.", correct: false }
+        ]
+      },
+      {
+        text: "Welche Beschreibung passt zur Sachebene einer Nachricht nach Schulz von Thun?",
+        category: "Kommunikation",
+        answers: [
+          { text: "Sie enthält die Beziehungsqualität zwischen Sender und Empfänger.", correct: false },
+          { text: "Sie enthält Appelle zur Veränderung des Verhaltens des Empfängers.", correct: false },
+          { text: "Sie vermittelt Daten, Fakten und sachliche Informationen der Nachricht.", correct: true },
+          { text: "Sie gibt ausschließlich Auskunft über die Gefühle des Senders.", correct: false },
+          { text: "Sie ist ausschließlich nonverbal codiert.", correct: false },
+          { text: "Sie wird vom Empfänger kaum interpretiert.", correct: false }
+        ]
+      },
+      {
+        text: "Welche Fragetechnik dient gemäß Skript primär der Präzisierung unklarer Aussagen?",
+        category: "Kommunikation",
+        answers: [
+          { text: "Alternativfragen", correct: false },
+          { text: "Bewertungsfragen", correct: false },
+          { text: "Suggestivfragen", correct: false },
+          { text: "Konkretisierungsfragen", correct: true },
+          { text: "Rhetorische Fragen", correct: false },
+          { text: "Skalierungsfragen", correct: false }
+        ]
+      },
+      {
+        text: "Welche Aussage zu Gruppenentwicklungsphasen nach Tuckman ist korrekt?",
+        category: "Sozialpsychologie",
+        answers: [
+          { text: "Die Storming-Phase ist typischerweise konfliktfrei.", correct: false },
+          { text: "In der Norming-Phase entwickelt sich eine gemeinsame Rollen- und Normstruktur.", correct: true },
+          { text: "In der Forming-Phase existieren bereits stabile Gruppenregeln.", correct: false },
+          { text: "Die Adjourning-Phase beschreibt die Phase maximaler Leistungsorientierung.", correct: false },
+          { text: "Das Modell besteht ausschließlich aus drei Phasen.", correct: false },
+          { text: "Tuckman schließt gruppeninterne Konflikte in seinem Modell aus.", correct: false }
+        ]
+      },
+      {
+        text: "Was beschreibt der Begriff „Selbstoffenbarung“ im Kommunikationsmodell nach Schulz von Thun?",
+        category: "Kommunikation",
+        answers: [
+          { text: "Die Intention des Senders bezüglich des gewünschten Verhaltens des Empfängers.", correct: false },
+          { text: "Die sachliche Informationsstruktur der Nachricht.", correct: false },
+          { text: "Den Appell, der an den Empfänger gerichtet ist.", correct: false },
+          { text: "Persönliche Aspekte des Senders, die er bewusst oder unbewusst über sich preisgibt.", correct: true },
+          { text: "Die soziale Rolle des Empfängers in der Interaktion.", correct: false },
+          { text: "Ausschließlich die nonverbalen Signale im Gespräch.", correct: false }
+        ]
+      },
+      {
+        text: "Welches Merkmal ist für hohe Extraversion im Big-Five-Modell typisch?",
+        category: "Big Five",
+        answers: [
+          { text: "Ausgeprägte Zurückhaltung in sozialen Situationen.", correct: false },
+          { text: "Soziale Aktivität und geselliges Verhalten.", correct: true },
+          { text: "Emotionale Instabilität und Ängstlichkeit.", correct: false },
+          { text: "Starke Verschlossenheit gegenüber neuen Kontakten.", correct: false },
+          { text: "Geringes Selbstwertgefühl im sozialen Kontext.", correct: false },
+          { text: "Ausgeprägte Skepsis gegenüber sozialen Interaktionen.", correct: false }
+        ]
+      },
+      {
+        text: "Welche Aussage zur Persönlichkeitspsychologie trifft im Sinne des Skripts zu?",
+        category: "Persönlichkeitspsychologie",
+        answers: [
+          { text: "Persönlichkeit bezieht sich ausschließlich auf beobachtbares Verhalten.", correct: false },
+          { text: "Persönlichkeit ist vollständig genetisch determiniert und unveränderlich.", correct: false },
+          { text: "Persönlichkeit umfasst stabile Muster von Denken, Fühlen und Verhalten.", correct: true },
+          { text: "Persönlichkeit kann im Erwachsenenalter grundsätzlich nicht mehr beeinflusst werden.", correct: false },
+          { text: "Persönlichkeit ist identisch mit Intelligenzleistung.", correct: false },
+          { text: "Persönlichkeit beschreibt ausschließlich Temperamentsunterschiede.", correct: false }
+        ]
+      },
+      {
+        text: "Welche Komponente ist Teil der „charakteristischen Adaptionen“ im Rahmenmodell nach McAdams?",
+        category: "Persönlichkeitspsychologie",
+        answers: [
+          { text: "Genetisches Temperament in der frühen Kindheit.", correct: false },
+          { text: "Persönliche Projekte, Ziele und Bewältigungsstrategien.", correct: true },
+          { text: "Neurobiologische Basisparameter der Informationsverarbeitung.", correct: false },
+          { text: "Allgemeine Intelligenzfaktoren.", correct: false },
+          { text: "Biologische Reifungsprozesse im Jugendalter.", correct: false },
+          { text: "Körperliche Merkmale und physiologische Konstitution.", correct: false }
+        ]
+      },
+      {
+        text: "Was beschreibt der Faktor „Neurotizismus“ im Big-Five-Modell inhaltlich?",
+        category: "Big Five",
+        answers: [
+          { text: "Die Fähigkeit, neue Erfahrungen aktiv zu suchen.", correct: false },
+          { text: "Die Tendenz zu ausgeprägter emotionaler Stabilität.", correct: false },
+          { text: "Die Anfälligkeit für Stress, Ängste und negative Emotionen.", correct: true },
+          { text: "Den Hang zu dominanten und durchsetzungsstarken Verhaltensweisen.", correct: false },
+          { text: "Die Ausprägung von Kreativität und Fantasie.", correct: false },
+          { text: "Die Stärke sozialer Verträglichkeit in Konfliktsituationen.", correct: false }
+        ]
+      },
+      {
+        text: "Welcher Zweck wird der Methodik des Paraphrasierens im Rahmen des Aktiven Zuhörens zugeschrieben?",
+        category: "Kommunikation",
+        answers: [
+          { text: "Die eigene Meinung des Zuhörers ausführlich hinzuzufügen.", correct: false },
+          { text: "Die emotionale Deutung des Gesagten durch den Zuhörer zu betonen.", correct: false },
+          { text: "Das Gesagte in eigenen Worten wiederzugeben, um Verständnis zu überprüfen.", correct: true },
+          { text: "Kritik am inhaltlichen Gehalt der Aussage zu äußern.", correct: false },
+          { text: "Primär nonverbale Hinweise des Gegenübers zu interpretieren.", correct: false },
+          { text: "Den Gesprächsabschluss formal einzuleiten.", correct: false }
+        ]
+      },
+      {
+        text: "Was ist ein möglicher Nachteil intuitiver Persönlichkeitseinschätzungen im Alltag?",
+        category: "Persönlichkeitspsychologie",
+        answers: [
+          { text: "Sie sind vollständig objektiv und neutral.", correct: false },
+          { text: "Sie sind frei von Wahrnehmungs- und Beurteilungsverzerrungen.", correct: false },
+          { text: "Sie beruhen ausschließlich auf stabilen, wissenschaftlich fundierten Modellen.", correct: false },
+          { text: "Sie unterliegen typischen Wahrnehmungsverzerrungen wie dem Halo-Effekt.", correct: true },
+          { text: "Sie ersetzen valide diagnostische Verfahren vollständig.", correct: false },
+          { text: "Sie sind in jedem Fall zuverlässig und generalisierbar.", correct: false }
+        ]
+      }
+    ];
+
+    // 20 Orte – finale Antwortmöglichkeiten
+    const locations = [
+      "Kellerraum ohne Fenster neben der Turnhalle",
+      "Lehrerzimmer",
+      "Sekretariat",
+      "Musikraum mit großen Fenstern",
+      "Bibliothek im 1. Stock",
+      "Physikraum mit Gasanschlüssen",
+      "Computerraum mit vielen Monitoren",
+      "Abstellraum neben dem Bio-Raum (ohne Fenster)",
+      "Kunstraum mit Waschbecken",
+      "Flur vor der Turnhalle",
+      "Werkraum im Erdgeschoss",
+      "Pausenhalle",
+      "Treppenhaus beim Haupteingang",
+      "Dachboden über der Aula",
+      "Raum der Schulsozialarbeit",
+      "Lehrmittelkammer mit Regalen",
+      "Schulküche",
+      "Chemieraum im 2. Stock",
+      "Toiletten neben der Aula",
+      "Kleiner Putzmittelraum ohne Fenster"
+    ];
+
+    // Der richtige Ort (Index aus locations)
+    const REAL_LOCATION_INDEX = 7; // Abstellraum neben dem Bio-Raum
+
+    // Story-Episoden (großes Schild mit Erklärung)
+    const storyEpisodes = {
+      0: {
+        heading: "Einführung & Regeln",
+        text:
+          "An einem ganz normalen Schultag bemerkt jemand in der Pause: Der Wasserautomat ist verschwunden. " +
+          "Ohne Wasser kein konzentriertes Lernen – also wird Dr. Simon gerufen. Er liebt Hamster, " +
+          "Detektivarbeit und faire Experimente.\n\n" +
+          "Deine Aufgabe:\n" +
+          "• Beantworte 20 Fragen so gut wie möglich.\n" +
+          "• Jede richtige Antwort bringt dich der Lösung näher – alle 4 richtigen Antworten bekommst du einen Hinweis.\n" +
+          "• Am Ende musst du entscheiden: An welchem Ort wurde der Wasserautomat versteckt?\n\n" +
+          "Während du spielst, läuft im Hintergrund ein Timer. " +
+          "Am Ende kannst du dich in die Highscore-Liste eintragen – mit Anzahl richtiger Antworten, Zeit und ob du den Ort gefunden hast. " +
+          "Der Highscore bleibt dauerhaft gespeichert. Mal sehen, wer in eurer Klasse der beste Wasserautomaten-Detektiv wird!"
+      },
+      5: {
+        heading: "Spur 1 – Verdächtige Orte",
+        text:
+          "Dr. Simon wandert durch die Schule. Überall stehen Schüler:innen mit leeren Flaschen. " +
+          "Er entdeckt Rollspuren auf dem Boden – der Wasserautomat muss gerollt worden sein. " +
+          "Die Spuren führen in Richtung der Fachräume.\n\n" +
+          "„Immer dahin, wo die Experimente sind“, murmelt er und notiert sich: " +
+          "Normale Klassenräume sind eher unwahrscheinlich – der Aufwand wäre zu groß."
+      },
+      10: {
+        heading: "Spur 2 – Der Hamster-Hinweis",
+        text:
+          "Im Bio-Trakt entdeckt Dr. Simon etwas Merkwürdiges: Neben einem Hamsterkäfig " +
+          "liegt ein leerer Plastikbecher mit getrockneten Wasserflecken. " +
+          "Jemand hat hier eine spontane Wasserkur gemacht.\n\n" +
+          "„Interessant… der Täter mag offenbar Hamster genauso wie ich“, denkt er. " +
+          "Und er fragt sich: Warum sollte jemand den Automaten näher zu den Tieren bringen?"
+      },
+      15: {
+        heading: "Spur 3 – Fensterlos",
+        text:
+          "In mehreren Räumen ist es stickig und dunkel. Dr. Simon schreibt in sein Notizbuch: " +
+          "„Räume ohne Fenster eignen sich perfekt, um einen Wasserautomaten zu verstecken, " +
+          "damit ihn niemand zufällig von außen entdeckt.“\n\n" +
+          "Er streicht alle Orte von der Liste, die große Fensterfronten oder Glaswände haben. " +
+          "Je mehr du richtig beantwortest, desto weniger Orte bleiben möglich."
+      },
+      20: {
+        heading: "Das Finale",
+        text:
+          "Nach 20 Fragen, etlichen Überlegungen und leisen Gesprächen mit dem Bio-Hamster " +
+          "hat Dr. Simon genug Hinweise gesammelt.\n\n" +
+          "„Es kann nur noch wenige Orte geben, an denen der Wasserautomat stehen kann. " +
+          "Der Rest fällt durch unsere Beobachtungen, Hinweise und ein bisschen logisches Denken weg.“\n\n" +
+          "Jetzt bist du dran: Wähle den richtigen Ort! Deine bisherigen richtigen Antworten " +
+          "bestimmen, wie viele Orte überhaupt noch zur Auswahl stehen."
+      }
+    };
+
+    // Hinweise (alle 4 richtigen Antworten)
+    const hintThresholds = [4, 8, 12, 16];
+    const hintTexts = {
+      4: "Hinweis: Der Wasserautomat steht jetzt nicht mehr in einem normalen Klassenraum mit täglich wechselnden Klassen.",
+      8: "Hinweis: Der neue Standort hat keine großen Fenster – man kann von außen nicht hineinsehen.",
+      12: "Hinweis: Der Wasserautomat steht in der Nähe eines naturwissenschaftlichen Bereichs oder der Bio-Tiere.",
+      16: "Hinweis: Der Raum wird normalerweise eher als Abstell- oder Putzraum verwendet, nicht als regulärer Unterrichtsraum."
+    };
+
+    // ==========================
+    // STATE-VARIABLEN
+    // ==========================
+    let currentQuestionIndex = 0;
+    let correctCount = 0;
+    let quizFinished = false;
+    let locationChosenIndex = null;
+    let timerSeconds = 0;
+    let timerInterval = null;
+    const allHints = [];
+    const unlockedHintThresholds = new Set();
+    const shownStoryEpisodes = new Set();
+
+    // ==========================
+    // DOM-ELEMENTE
+    // ==========================
+    const questionCounterEl = document.getElementById("questionCounter");
+    const questionCategoryEl = document.getElementById("questionCategory");
+    const questionInfoEl = document.getElementById("questionInfo");
+    const questionTextEl = document.getElementById("questionText");
+    const answersContainerEl = document.getElementById("answersContainer");
+    const feedbackTextEl = document.getElementById("feedbackText");
+    const correctCountDisplayEl = document.getElementById("correctCountDisplay");
+    const timerDisplayEl = document.getElementById("timerDisplay");
+    const currentStoryContentEl = document.getElementById("currentStoryContent");
+    const resultBoxEl = document.getElementById("resultBox");
+    const resultSummaryEl = document.getElementById("resultSummary");
+    const quizSectionEl = document.getElementById("quizSection");
+    const killerSectionEl = document.getElementById("killerSection");
+    const killerGridEl = document.getElementById("killerGrid");
+    const killerFeedbackEl = document.getElementById("killerFeedback");
+    const playerNameInputEl = document.getElementById("playerNameInput");
+    const saveScoreButtonEl = document.getElementById("saveScoreButton");
+    const restartButtonEl = document.getElementById("restartButton");
+    const highscoreBodyEl = document.getElementById("highscoreBody");
+    const highscoreEmptyEl = document.getElementById("highscoreEmpty");
+    const hintsListEl = document.getElementById("hintsList");
+
+    const storyOverlayEl = document.getElementById("storyOverlay");
+    const storyOverlayHeadingEl = document.getElementById("storyOverlayHeading");
+    const storyOverlayTextEl = document.getElementById("storyOverlayText");
+    const storyOverlayCloseEl = document.getElementById("storyOverlayClose");
+
+    // ==========================
+    // TIMER
+    // ==========================
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timerSeconds++;
+        updateTimerDisplay();
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function resetTimer() {
+      timerSeconds = 0;
+      updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+      const minutes = String(Math.floor(timerSeconds / 60)).padStart(2, "0");
+      const seconds = String(timerSeconds % 60).padStart(2, "0");
+      timerDisplayEl.textContent = minutes + ":" + seconds;
+    }
+
+    // ==========================
+    // HILFSFUNKTIONEN
+    // ==========================
+    function shuffleArray(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    // ==========================
+    // STORY OVERLAY (SCHILD)
+    // ==========================
+    function showStoryEpisode(key) {
+      if (!storyEpisodes[key] || shownStoryEpisodes.has(key)) return;
+      shownStoryEpisodes.add(key);
+
+      const ep = storyEpisodes[key];
+      storyOverlayHeadingEl.textContent = ep.heading;
+      storyOverlayTextEl.textContent = ep.text;
+      storyOverlayEl.classList.remove("hidden");
+      stopTimer();
+    }
+
+    function hideStoryOverlay() {
+      storyOverlayEl.classList.add("hidden");
+      if (!quizFinished) {
+        startTimer();
+      }
+    }
+
+    storyOverlayCloseEl.addEventListener("click", hideStoryOverlay);
+    storyOverlayEl.addEventListener("click", (e) => {
+      if (e.target === storyOverlayEl) {
+        hideStoryOverlay();
+      }
+    });
+
+    // ==========================
+    // QUIZ-FUNKTIONEN
+    // ==========================
+    function renderQuestion() {
+      const q = questions[currentQuestionIndex];
+      const qNum = currentQuestionIndex + 1;
+
+      questionCounterEl.textContent = "Frage " + qNum + " / " + questions.length;
+      questionCategoryEl.textContent = q.category || "Allgemein";
+      questionInfoEl.textContent = "";
+      questionTextEl.textContent = q.text;
+
+      // Story-Episoden bei 5 / 10 / 15 / 20
+      if ([5, 10, 15, 20].includes(qNum)) {
+        showStoryEpisode(qNum);
+      }
+
+      const shuffledAnswers = shuffleArray(
+        q.answers.map((a, index) => ({ ...a, originalIndex: index }))
+      );
+
+      answersContainerEl.innerHTML = "";
+      shuffledAnswers.forEach((answerObj, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "answer-btn";
+        const labelSpan = document.createElement("span");
+        labelSpan.className = "answer-label";
+        labelSpan.textContent = String.fromCharCode(65 + idx); // A-F
+        const textSpan = document.createElement("span");
+        textSpan.textContent = answerObj.text;
+        btn.appendChild(labelSpan);
+        btn.appendChild(textSpan);
+
+        btn.addEventListener("click", () =>
+          handleAnswerClick(btn, answerObj, shuffledAnswers)
+        );
+        answersContainerEl.appendChild(btn);
+      });
+
+      feedbackTextEl.textContent = "Wähle eine Antwort aus.";
+    }
+
+    function disableAllAnswers() {
+      const buttons = answersContainerEl.querySelectorAll(".answer-btn");
+      buttons.forEach((b) => {
+        b.classList.add("disabled");
+      });
+    }
+
+    function maybeUnlockHint() {
+      hintThresholds.forEach((threshold) => {
+        if (correctCount >= threshold && !unlockedHintThresholds.has(threshold)) {
+          unlockedHintThresholds.add(threshold);
+          const label = "Hinweis " + threshold;
+          const text = hintTexts[threshold] || "Allgemeiner Hinweis.";
+          addHint(label, text);
+        }
+      });
+    }
+
+    function handleAnswerClick(clickedButton, answerObj, allAnswers) {
+      if (quizFinished) return;
+
+      disableAllAnswers();
+
+      const buttons = answersContainerEl.querySelectorAll(".answer-btn");
+      allAnswers.forEach((a, idx) => {
+        if (a.correct) {
+          buttons[idx].classList.add("correct");
+        }
+      });
+
+      if (answerObj.correct) {
+        correctCount++;
+        correctCountDisplayEl.textContent = correctCount;
+        clickedButton.classList.add("correct");
+        feedbackTextEl.textContent = "Richtig! Gute Arbeit, Detektiv.";
+        maybeUnlockHint();
+      } else {
+        clickedButton.classList.add("wrong");
+        feedbackTextEl.textContent =
+          "Falsch – aber du kannst den Fall trotzdem noch lösen.";
+      }
+
+      if (currentQuestionIndex < questions.length - 1) {
+        setTimeout(() => {
+          currentQuestionIndex++;
+          renderQuestion();
+        }, 1000);
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function finishQuiz() {
+      quizFinished = true;
+      stopTimer();
+      quizSectionEl.classList.add("hidden");
+      resultBoxEl.style.display = "block";
+
+      const minutes = String(Math.floor(timerSeconds / 60)).padStart(2, "0");
+      const seconds = String(timerSeconds % 60).padStart(2, "0");
+
+      resultSummaryEl.innerHTML =
+        "Du hast <strong>" +
+        correctCount +
+        "</strong> von <strong>" +
+        questions.length +
+        "</strong> Fragen richtig beantwortet.<br/>" +
+        "Benötigte Zeit: <strong>" +
+        minutes +
+        ":" +
+        seconds +
+        "</strong>.";
+
+      // Finale Story-Episode (Ende)
+      showStoryEpisode(20);
+
+      renderLocationSelection();
+      killerSectionEl.classList.remove("hidden");
+      feedbackTextEl.textContent = "Große Frage: Wo steht der Wasserautomat?";
+    }
+
+    function resetQuiz() {
+      quizFinished = false;
+      currentQuestionIndex = 0;
+      correctCount = 0;
+      correctCountDisplayEl.textContent = "0";
+      locationChosenIndex = null;
+      playerNameInputEl.value = "";
+      saveScoreButtonEl.disabled = true;
+      killerFeedbackEl.textContent = "";
+      resultBoxEl.style.display = "none";
+      killerSectionEl.classList.add("hidden");
+      quizSectionEl.classList.remove("hidden");
+      answersContainerEl.innerHTML = "";
+      currentStoryContentEl.textContent =
+        "Dr. Simon hat bemerkt, dass der Wasserautomat in der Schule verschwunden ist – und irgendjemand hat ihn umgestellt…";
+
+      allHints.length = 0;
+      hintsListEl.innerHTML = "";
+      addHint("Hinweis 0", "Die Ermittlungen haben gerade erst begonnen…");
+      unlockedHintThresholds.clear();
+      shownStoryEpisodes.clear();
+
+      resetTimer();
+      startTimer();
+      renderQuestion();
+      // Einleitung-Story am Anfang
+      showStoryEpisode(0);
+    }
+
+    // ==========================
+    // HINWEISE
+    // ==========================
+    function addHint(label, text) {
+      allHints.push({ label, text });
+      renderHintsList();
+    }
+
+    function renderHintsList() {
+      hintsListEl.innerHTML = "";
+      allHints.forEach((h) => {
+        const item = document.createElement("div");
+        item.className = "hint-item";
+        const labelDiv = document.createElement("div");
+        labelDiv.className = "hint-label";
+        labelDiv.textContent = h.label;
+        const textDiv = document.createElement("div");
+        textDiv.textContent = h.text;
+        item.appendChild(labelDiv);
+        item.appendChild(textDiv);
+        hintsListEl.appendChild(item);
+      });
+    }
+
+    // ==========================
+    // ORT-AUSWAHL
+    // ==========================
+    function renderLocationSelection() {
+      killerGridEl.innerHTML = "";
+
+      // Anzahl Orte, die sichtbar bleiben:
+      // 20 - richtige Antworten, mindestens aber 1
+      let locationsToKeep = 20 - correctCount;
+      if (locationsToKeep < 1) locationsToKeep = 1;
+      if (locationsToKeep > locations.length) {
+        locationsToKeep = locations.length;
+      }
+
+      // Immer den richtigen Ort behalten
+      const allIndices = locations.map((_, i) => i);
+      const otherIndices = allIndices.filter((i) => i !== REAL_LOCATION_INDEX);
+      const shuffledOthers = shuffleArray(otherIndices);
+
+      const keptIndices = [REAL_LOCATION_INDEX];
+      while (keptIndices.length < locationsToKeep && shuffledOthers.length > 0) {
+        keptIndices.push(shuffledOthers.shift());
+      }
+
+      const visibleSet = new Set(keptIndices);
+
+      locations.forEach((name, index) => {
+        if (!visibleSet.has(index)) {
+          return; // nicht anzeigen
+        }
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "killer-btn";
+        btn.textContent = name;
+
+        btn.addEventListener("click", () => chooseLocation(index));
+        killerGridEl.appendChild(btn);
+      });
+    }
+
+    function chooseLocation(index) {
+      // nur 1 Chance
+      if (locationChosenIndex !== null) return;
+      locationChosenIndex = index;
+
+      const buttons = killerGridEl.querySelectorAll(".killer-btn");
+      const isCorrect = index === REAL_LOCATION_INDEX;
+
+      buttons.forEach((b) => {
+        b.classList.add("disabled");
+        if (b.textContent === locations[REAL_LOCATION_INDEX]) {
+          b.classList.add("correct");
+        }
+        if (b.textContent === locations[index] && !isCorrect) {
+          b.classList.add("wrong");
+        }
+      });
+
+      if (isCorrect) {
+        killerFeedbackEl.textContent =
+          "Du hast den richtigen Ort gefunden! Der Wasserautomat steht wieder sicher.";
+      } else {
+        killerFeedbackEl.textContent =
+          "Das war leider nicht der richtige Ort. Du bekommst keine zweite Chance.";
+      }
+
+      saveScoreButtonEl.disabled = false;
+      const highscoreTableEl = document.getElementById("highscoreTable");
+      if (highscoreTableEl && highscoreTableEl.scrollIntoView) {
+        highscoreTableEl.scrollIntoView({ behavior: "smooth" });
+      }
+      playerNameInputEl.focus();
+    }
+
+    // ==========================
+    // HIGHSCORE
+    // ==========================
+    const HIGHSCORE_KEY = "waterQuizHighscore";
+
+    function loadHighscore() {
+      try {
+        const raw = localStorage.getItem(HIGHSCORE_KEY);
+        if (!raw) return [];
+        const data = JSON.parse(raw);
+        if (!Array.isArray(data)) return [];
+        return data;
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveHighscore(data) {
+      localStorage.setItem(HIGHSCORE_KEY, JSON.stringify(data));
+    }
+
+    function addHighscoreEntry(name, correct, timeSeconds, locationCorrect) {
+      const list = loadHighscore();
+      list.push({
+        name,
+        correct,
+        timeSeconds,
+        locationCorrect: !!locationCorrect,
+        createdAt: new Date().toISOString()
+      });
+
+      list.sort((a, b) => {
+        if (b.correct !== a.correct) return b.correct - a.correct;
+        return a.timeSeconds - b.timeSeconds;
+      });
+
+      const trimmed = list.slice(0, 10);
+      saveHighscore(trimmed);
+      renderHighscore();
+    }
+
+    function formatTimeSeconds(sec) {
+      const minutes = String(Math.floor(sec / 60)).padStart(2, "0");
+      const seconds = String(sec % 60).padStart(2, "0");
+      return minutes + ":" + seconds;
+    }
+
+    function renderHighscore() {
+      const list = loadHighscore();
+      highscoreBodyEl.innerHTML = "";
+      if (!list.length) {
+        highscoreEmptyEl.style.display = "block";
+        return;
+      }
+      highscoreEmptyEl.style.display = "none";
+
+      list.forEach((entry, index) => {
+        const tr = document.createElement("tr");
+
+        const rankTd = document.createElement("td");
+        rankTd.className = "highscore-rank";
+        rankTd.textContent = index + 1;
+
+        const nameTd = document.createElement("td");
+        nameTd.textContent = entry.name || "Unbekannt";
+
+        const correctTd = document.createElement("td");
+        correctTd.textContent = entry.correct;
+
+        const timeTd = document.createElement("td");
+        timeTd.textContent = formatTimeSeconds(entry.timeSeconds);
+
+        const locTd = document.createElement("td");
+        locTd.textContent = entry.locationCorrect ? "Ja" : "Nein";
+
+        tr.appendChild(rankTd);
+        tr.appendChild(nameTd);
+        tr.appendChild(correctTd);
+        tr.appendChild(timeTd);
+        tr.appendChild(locTd);
+        highscoreBodyEl.appendChild(tr);
+      });
+    }
+
+    // ==========================
+    // EVENT-LISTENER
+    // ==========================
+    restartButtonEl.addEventListener("click", () => {
+      if (confirm("Willst du das Quiz wirklich neu starten?")) {
+        resetQuiz();
+      }
+    });
+
+    saveScoreButtonEl.addEventListener("click", () => {
+      const name = playerNameInputEl.value.trim() || "Unbekannt";
+      if (locationChosenIndex === null) {
+        alert("Bitte wähle zuerst einen Ort aus.");
+        return;
+      }
+      const locationCorrect = locationChosenIndex === REAL_LOCATION_INDEX;
+      addHighscoreEntry(name, correctCount, timerSeconds, locationCorrect);
+      saveScoreButtonEl.disabled = true;
+    });
+
+    // ==========================
+    // INIT
+    // ==========================
+    function init() {
+      addHint("Hinweis 0", "Die Ermittlungen haben gerade erst begonnen…");
+      renderHighscore();
+      resetTimer();
+      startTimer();
+      renderQuestion();
+      showStoryEpisode(0); // Einleitung am Anfang
+    }
+
+    init();
+  </script>
+</body>
+</html>
